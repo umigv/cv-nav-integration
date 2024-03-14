@@ -121,13 +121,6 @@ class DrivableArea(Node):
 
 
 
-    def timer_callback(self):
-        # Get a new occupancy grid
-        grid = self.get_occupancy_grid()
-        # Publish the occupancy grid
-        self.publisher_.publish(grid)
-        # Log a message
-        self.get_logger().info('Publishing occupancy grid')
     # TODO: translate the occupancy grid into birds eye view
     # TODO: publish the occupancy grid for nav team
     def listener_callback(self, msg):
