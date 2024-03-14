@@ -17,7 +17,7 @@ class DrivableArea(Node):
 
     def __init__(self):
         super().__init__('drivable_area')
-        
+        self.publisher_ = self.create_publisher(OccupancyGrid, 'topic', 10)
         # the topic 'url' should be changed to a more specific topic name
         self.subscription = self.create_subscription(
             Image,
@@ -27,7 +27,13 @@ class DrivableArea(Node):
         self.subscription  # prevent unused variable warning
         self.bridge = CvBridge()
 
-
+    def timer_callback(self):
+        # Get a new occupancy grid
+        grid = self.get_occupancy_grid()
+        # Publish the occupancy grid
+        self.publisher_.publish(grid)
+        # Log a message
+        self.get_logger().info('Publishing occupancy grid')
     # TODO: translate the occupancy grid into birds eye view
     # TODO: publish the occupancy grid for nav team
     def listener_callback(self, msg):
@@ -119,7 +125,7 @@ def numpy_to_occupancy_grid(arr, info=None, x=80,y=77):
     grid.info = info or MapMetaData()
     grid.info.height = arr.shape[0]
     grid.info.width = arr.shape[1]
-    grid.info.geometry_msgs/Pose origin = (x,y,0)
+    grid.info.geometry_msgs.origin = (x,y,0)
 
 #     return grid
 if __name__ == '__main__':
