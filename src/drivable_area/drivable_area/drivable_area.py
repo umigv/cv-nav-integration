@@ -124,7 +124,7 @@ class DrivableArea(Node):
     # TODO: translate the occupancy grid into birds eye view
     # TODO: publish the occupancy grid for nav team
     def listener_callback(self, msg):
-        
+   
         #converts Image message to cv2 type
         frame = self.bridge.imgmsg_to_cv2(msg, "bgr8")
 
