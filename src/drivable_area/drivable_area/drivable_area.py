@@ -3,7 +3,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 import cv2
-import numpy as np
+import cupy as np
 from ultralytics import YOLO
 from nav_msgs.msg import OccupancyGrid, MapMetaData
 from array import array as Array
@@ -13,8 +13,8 @@ import time
 from drivable_area.bev import CameraProperties, getBirdView
 
 # Load the YOLO models for lane and pothole detection
-lane_model = YOLO('drivable_area/drivable_area/utils/LLOnly180ep.pt')
-hole_model = YOLO('drivable_area/drivable_area/utils/potholesonly100epochs.pt')
+lane_model = YOLO('src/drivable_area/drivable_area/utils/LLOnly180ep.pt')
+hole_model = YOLO('src/drivable_area/drivable_area/utils/potholesonly100epochs.pt')
 
 class DrivableArea(Node):
     def __init__(self):
@@ -54,18 +54,21 @@ class DrivableArea(Node):
             if(len(r_lane.masks.xy) != 0):
                 segment = r_lane.masks.xy[0]
                 segment_array = np.array([segment], dtype=np.int32)
-                cv2.fillPoly(occupancy_grid, [segment_array], 255)
+                # cv2.fillPoly(np.asnumpy(occupancy_grid), np.asnumpy([segment_array]), 255)
+                cv2.fillPoly(occupancy_grid.get(), [segment_array.get()], 255)
+
                 time_of_frame = time.time()
 
         # If the potholes are detected, put a mask of the potholes on the occupancy grid and mark the area as occupied
         if r_hole.boxes is not None:
             for segment in r_hole.boxes.xyxyn:
                 x_min, y_min, x_max, y_max = segment
-                vertices = np.array([[x_min*image_width, y_min*image_height], 
-                                    [x_max*image_width, y_min*image_height], 
-                                    [x_max*image_width, y_max*image_height], 
-                                    [x_min*image_width, y_max*image_height]], dtype=np.int32)
-                cv2.fillPoly(occupancy_grid, [vertices], color=(0, 0, 0))
+                vertices = np.array([[x_min.cpu()*image_width, y_min.cpu()*image_height], 
+                                    [x_max.cpu()*image_width, y_min.cpu()*image_height], 
+                                    [x_max.cpu()*image_width, y_max.cpu()*image_height], 
+                                    [x_min.cpu()*image_width, y_max.cpu()*image_height]], dtype=np.int32)
+
+                cv2.fillPoly(occupancy_grid.get(), [vertices.get()], color=(0, 0, 0))
 
         # Calculate the buffer time
         buffer_area = np.sum(occupancy_grid)//255
@@ -82,6 +85,7 @@ class DrivableArea(Node):
 
         # Get the occupancy grid
         occupancy_grid_display, buffer_time, time_of_frame = self.get_occupancy_grid(frame)
+        print(occupancy_grid_display)
         total = np.sum(occupancy_grid_display)
         curr_time = time.time()
 
@@ -106,7 +110,7 @@ class DrivableArea(Node):
         pts =  np.array([bottomLeft, [bottomRight[0] - 27, bottomRight[1]], [topRight[0] - 65, topRight[1]], topLeft])
         pts = pts.astype(np.int32)  # convert points to int32
         pts = pts.reshape((-1, 1, 2))  # reshape points
-        cv2.fillPoly(mask, [pts], True, 0)
+        cv2.fillPoly(mask.get(), [pts.get()], True, 0)
 
         # Apply the mask to the occupancy grid
         indicies = np.where(mask == -1)
@@ -139,9 +143,9 @@ class DrivableArea(Node):
         grid.header.stamp = self.get_clock().now().to_msg()
         grid.header.frame_id = 'map'
         grid.info = MapMetaData()
-        grid.info.resolution = 0.05
-        grid.info.width = 169
-        grid.info.height = 22
+        grid.info.resolution = self.desired_size
+        grid.info.width = array.shape[1]
+        grid.info.height = array.shape[0]
         grid.info.origin.position.x = 34.0
         grid.info.origin.position.y = 85.0
         grid.info.origin.position.z = 0.0

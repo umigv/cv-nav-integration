@@ -1,5 +1,5 @@
 from math import radians, cos
-import numpy as np
+import cupy as np
 import cv2
 
 class CameraProperties(object):
@@ -74,7 +74,7 @@ def perspective(image, src_quad, dst_quad, cp):
     heightB = bottomRight[1] - topRight[1]
     maxHeight1 = max(heightA, heightB)
 
-    matrix1 = cv2.getPerspectiveTransform(src_quad, dst_quad)
+    matrix1 = cv2.getPerspectiveTransform(src_quad.get(), dst_quad.get())
     cp.matrix = matrix1
     cp.maxWidth = int(maxWidth1)
     cp.maxHeight = int(maxHeight1)

@@ -1,12 +1,12 @@
 import cv2
-import numpy as np
+import cupy as np
 from sensor_msgs.msg import Image
 import rclpy
 from rclpy.node import Node
 from cv_bridge import CvBridge
 
 
-video = cv2.VideoCapture("drivable_area/drivable_area/utils/IMG_7493.mp4")
+video = cv2.VideoCapture("src/drivable_area/drivable_area/utils/IMG_7493.mp4")
 
 
 fps = int(video.get(cv2.CAP_PROP_FPS))
