@@ -1,0 +1,26 @@
+drivable_area:
+  ros__parameters:
+    use_sim_time: True
+    subscription:
+      topic: '/zed/image_raw'
+      queue_size: 10
+    bridge: CvBridge
+    camera_properties:
+      field_of_view: 54
+      aspect_ratio: 68.0
+      near_clip: 101.0
+      far_clip: 68.0
+    pixel_size:
+      current: 0.006
+      desired: 0.05
+    publisher:
+      topic: 'occupancy_grid'
+      queue_size: 10
+    lane_model:
+      confidence: 0.5
+    hole_model:
+      confidence: 0.25
+
+drivable_area_rclcpp_node:
+  ros__parameters:
+    use_sim_time: True
